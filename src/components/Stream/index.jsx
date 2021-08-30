@@ -83,7 +83,6 @@ function Stream(props) {
                 })
 
                 socket.on('user-connected', (user) => {
-                    console.log(user);
                     setNewUsers([...users, user]);
                     const call = myPeer.call(user.peerId, stream, { metadata: { userName: nameUser } });
                     call.on('stream', userVideoStream => {
