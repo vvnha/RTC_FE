@@ -1,0 +1,42 @@
+#video-grid {
+    float: left;
+    width: 70%;
+    $sizeGrid: 300px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, $sizeGrid);
+    grid-auto-rows: $sizeGrid;
+}
+// #video-grid video {
+//     width: 100%;
+//     height: 80%;
+//     margin-top: 40px;
+//     object-fit: cover;
+//     position: relative;
+//     vertical-align: bottom;
+//     float: left;
+// }
+
+#video #Div1 {
+    width: 100%;
+    height: 100%;
+    background-color: aqua;
+    margin-top: 40px;
+    object-fit: cover;
+    position: relative;
+    vertical-align: bottom;
+    float: left;
+}
+#Div1 video {
+    width: 100%;
+    height: 80%;
+    margin-top: 40px;
+    object-fit: cover;
+    position: relative;
+    vertical-align: bottom;
+    float: left;
+}
+#Div1 p {
+    float: left;
+    width: 300px;
+    position: absolute;
+}
