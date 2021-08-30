@@ -103,7 +103,6 @@ function Stream(props) {
 
     useEffect(() => {
         socket.on('user-disconnected', peerId => {
-            console.log(peerId);
             removeStream(listStream, peerId);
         })
 
