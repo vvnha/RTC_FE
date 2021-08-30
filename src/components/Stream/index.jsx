@@ -1,4 +1,4 @@
-import { React, useEffect, useRef, useState, createRef, useMemo } from 'react';
+import { React, useEffect, useRef, useState, createRef, useMemo, useCallback } from 'react';
 // import PropTypes from 'prop-types';
 import './Stream.scss';
 import Peer from 'peerjs';
@@ -75,7 +75,7 @@ function Stream(props) {
                     call.answer(stream);
                     call.on('stream', (userVideoStream) => {
                         console.log();
-                        addStream(userVideoStream, call.peer, call.metadata.userName)
+                        AddStream(userVideoStream, call.peer, call.metadata.userName)
                     });
                     call.on('close', () => {
                         alert('ok')
@@ -86,7 +86,7 @@ function Stream(props) {
                     setNewUsers([...users, user]);
                     const call = myPeer.call(user.peerId, stream, { metadata: { userName: nameUser } });
                     call.on('stream', userVideoStream => {
-                        addStream(userVideoStream, call.peer, user.userName)
+                        AddStream(userVideoStream, call.peer, user.userName)
                     })
                 })
 
@@ -103,14 +103,14 @@ function Stream(props) {
 
     useEffect(() => {
         socket.on('user-disconnected', peerId => {
-            removeStream(listStream, peerId);
+            RemoveStream(peerId);
         })
 
         //handle when click button stop sharing
         if (screenStream !== null) {
             screenStream.getVideoTracks()[0].onended = function () {
                 setScreenStatus(false);
-                removeStream(listStream, null);
+                RemoveStream(null);
                 socket.emit('user-disconnect', screenPeer.id);
                 screenPeer.destroy();
             };
@@ -151,7 +151,7 @@ function Stream(props) {
             newPeer.on('open', (id) => {
                 socket.emit('join-room', roomId, id, nameUser + "'s screen");
             });
-            addStream(screenStream, newPeer.id, nameUser + "'s screen");
+            AddStream(screenStream, newPeer.id, nameUser + "'s screen");
             newPeer.on('call', call => {
                 call.answer(screenStream)
             });
@@ -159,7 +159,7 @@ function Stream(props) {
             screenStream.getVideoTracks()[0].onended = false;
             setScreenStatus(!screenStatus);
             socket.emit('user-disconnect', screenPeer.id);
-            removeStream(listStream, null);
+            RemoveStream(null);
             screenPeer.destroy();
         }
 
@@ -176,17 +176,22 @@ function Stream(props) {
         setMessage(e.target.value)
     }
 
-    const addStream = (userVideoStream, peerId, userName) => {
-        setlistStream(list => {
-            const newList = [...list, { peerId, videoStream: userVideoStream, userName }];
-            const unique = [...new Map(newList.map(item => [item['peerId'], item])).values()];
-            return (unique)
-        })
-    }
+    const AddStream =
+        useCallback(
+            (userVideoStream, peerId, userName) => setlistStream(list => {
+                const newList = [...list, { peerId, videoStream: userVideoStream, userName }];
+                const unique = [...new Map(newList.map(item => [item['peerId'], item])).values()];
+                return (unique)
+            }), []
+        );
 
-    const removeStream = (streams, peerId) => {
-        setlistStream(list => list.filter(stream => stream.peerId !== peerId));
-    }
+
+    const RemoveStream =
+        useCallback(
+            (peerId) => {
+                setlistStream(list => list.filter(stream => stream.peerId !== peerId))
+            }, []
+        );
 
     const ListVideo = () => {
         const ShowListVideos = useMemo(() => {
