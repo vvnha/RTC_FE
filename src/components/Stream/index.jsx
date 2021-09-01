@@ -12,9 +12,15 @@ Stream.propTypes = {
 const nameUser = faker.name.findName();
 const roomId = "abcd"
 
+const serverAWS = "temp-classic.node-training.tk"
+const serverHeroku = "stream082021.herokuapp.com"
+
 const serverLink = "ec2-user@ec2-18-140-5-56.ap-southeast-1.compute.amazonaws.com";
 // const serverLink = "localhost"
-const link = `http://${serverLink}:5000`;
+
+//const link = `https://${serverLink}:5000`;
+const link = `https://${serverHeroku}`;
+
 
 const socket = io.connect(link)
 const chatSocket = io.connect(link);
@@ -78,7 +84,7 @@ function Stream(props) {
                         AddStream(userVideoStream, call.peer, call.metadata.userName)
                     });
                     call.on('close', () => {
-                        alert('ok')
+                        console.log('close');
                     })
                 })
 
