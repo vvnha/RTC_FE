@@ -100,6 +100,20 @@ function Stream(props) {
                     setListMessages(list => [...list, rs])
                 })
 
+                socket.on('user-disconnected', peerId => {
+                    RemoveStream(peerId);
+                })
+        
+                //handle when click button stop sharing
+                if (screenStream !== null) {
+                    screenStream.getVideoTracks()[0].onended = function () {
+                        setScreenStatus(false);
+                        RemoveStream(null);
+                        socket.emit('user-disconnect', screenPeer.id);
+                        screenPeer.destroy();
+                    };
+                }
+
             } catch (err) {
                 console.log(err);
             }
@@ -107,21 +121,9 @@ function Stream(props) {
         getUserMedia();
     }, [])
 
-    useEffect(() => {
-        socket.on('user-disconnected', peerId => {
-            RemoveStream(peerId);
-        })
-
-        //handle when click button stop sharing
-        if (screenStream !== null) {
-            screenStream.getVideoTracks()[0].onended = function () {
-                setScreenStatus(false);
-                RemoveStream(null);
-                socket.emit('user-disconnect', screenPeer.id);
-                screenPeer.destroy();
-            };
-        }
-    })
+    // useEffect(() => {
+       
+    // })
 
 
     const handleMuteButton = () => {
