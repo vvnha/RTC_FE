@@ -1,4 +1,4 @@
-import { React, useEffect, useRef, useState, createRef, useMemo, useCallback } from 'react';
+import React,{ useEffect, useRef, useState, createRef, useMemo, useCallback } from 'react';
 // import PropTypes from 'prop-types';
 import './Stream.scss';
 import Peer from 'peerjs';
@@ -25,7 +25,7 @@ const link = `https://${serverHeroku}`;
 const socket = io.connect(link)
 const chatSocket = io.connect(link);
 
-const Video = ({ stream, userName }) => {
+const Video = React.memo(({ stream, userName }) => {
     const localVideo = createRef();
 
     useEffect(() => {
@@ -38,7 +38,7 @@ const Video = ({ stream, userName }) => {
             <video ref={localVideo} autoPlay />
         </div>
     );
-};
+});
 
 const ShowMessages = ({ message }) => {
     return (
@@ -66,64 +66,60 @@ function Stream(props) {
     const [screenPeer, setScreenPeer] = useState(null);
     const [screenStream, setScreenStream] = useState(null);
 
+    const getUserMedia = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            stream.getAudioTracks()[0].enabled = false;
+            stream.getVideoTracks()[0].enabled = true;
+            setStream(stream)
+            myVideo.current.srcObject = stream;
+
+            myPeer.on('call', async call => {
+                var tempVideo = listStream;
+                call.answer(stream);
+                call.on('stream', (userVideoStream) => {
+                    console.log();
+                    AddStream(userVideoStream, call.peer, call.metadata.userName)
+                });
+                call.on('close', () => {
+                    console.log('close');
+                })
+            })
+
+            socket.on('user-connected', (user) => {
+                setNewUsers([...users, user]);
+                const call = myPeer.call(user.peerId, stream, { metadata: { userName: nameUser } });
+                call.on('stream', userVideoStream => {
+                    AddStream(userVideoStream, call.peer, user.userName)
+                })
+            })
+
+            socket.on('message-list', rs => {
+                setListMessages(list => [...list, rs])
+            })
+
+            socket.on('user-disconnected', peerId => {
+                RemoveStream(peerId);
+            })
+    
+            //handle when click button stop sharing
+            if (screenStream !== null) {
+                screenStream.getVideoTracks()[0].onended = function () {
+                    setScreenStatus(false);
+                    RemoveStream(null);
+                    socket.emit('user-disconnect', screenPeer.id);
+                    screenPeer.destroy();
+                };
+            }
+
+        } catch (err) {
+            console.log(err);
+        }
+    };
 
     useEffect(() => {
-        const getUserMedia = async () => {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                stream.getAudioTracks()[0].enabled = false;
-                stream.getVideoTracks()[0].enabled = true;
-                setStream(stream)
-                myVideo.current.srcObject = stream;
-
-                myPeer.on('call', async call => {
-                    var tempVideo = listStream;
-                    call.answer(stream);
-                    call.on('stream', (userVideoStream) => {
-                        console.log();
-                        AddStream(userVideoStream, call.peer, call.metadata.userName)
-                    });
-                    call.on('close', () => {
-                        console.log('close');
-                    })
-                })
-
-                socket.on('user-connected', (user) => {
-                    setNewUsers([...users, user]);
-                    const call = myPeer.call(user.peerId, stream, { metadata: { userName: nameUser } });
-                    call.on('stream', userVideoStream => {
-                        AddStream(userVideoStream, call.peer, user.userName)
-                    })
-                })
-
-                socket.on('message-list', rs => {
-                    setListMessages(list => [...list, rs])
-                })
-
-                socket.on('user-disconnected', peerId => {
-                    RemoveStream(peerId);
-                })
-        
-                //handle when click button stop sharing
-                if (screenStream !== null) {
-                    screenStream.getVideoTracks()[0].onended = function () {
-                        setScreenStatus(false);
-                        RemoveStream(null);
-                        socket.emit('user-disconnect', screenPeer.id);
-                        screenPeer.destroy();
-                    };
-                }
-
-            } catch (err) {
-                console.log(err);
-            }
-        };
         getUserMedia();
     }, [])
-
-    // useEffect(() => {
-       
-    // })
 
 
     const handleMuteButton = () => {
@@ -201,14 +197,10 @@ function Stream(props) {
             }, []
         );
 
-    const ListVideo = () => {
-        const ShowListVideos = useMemo(() => {
-            return listStream.map(
-                (s, i) => <Video key={s.peerId} stream={s.videoStream} userName={s.userName} />
-            )
-        }, [listStream])
-        return ShowListVideos;
-    }
+    const ListVideo = listStream.map(
+                (s, _) => <Video key={s.peerId} stream={s.videoStream} userName={s.userName} />
+            );
+    
 
     const showListMessages = (list) => {
         return list.map(
@@ -232,7 +224,7 @@ function Stream(props) {
                         autoPlay
                     />
                 </div>
-                {ListVideo()}
+                {ListVideo}
             </div>
             <div id="message">
                 <p>Chat:</p>
